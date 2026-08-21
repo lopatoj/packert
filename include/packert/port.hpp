@@ -33,12 +33,12 @@ public:
 
   Port(Transport &transport) : transport_(transport) {}
 
-  template <std::derived_from<Message> M, typename Callback>
+  template <typename M, typename Callback>
   std::error_code bind(Callback callback) {
     MessageId message_id = MessageTraits<M>::ID;
 
     // Passed type without configured nanopb struct
-    if (message_id == 0) {
+    if (message_id == kInvalidMessageId) {
       return std::make_error_code(std::errc::invalid_argument);
     }
 
@@ -56,7 +56,7 @@ public:
       if (callbacks_[i].message_id == message_id) {
         return std::make_error_code(std::errc::address_in_use);
       }
-      if (callbacks_[i].message_id == 0) {
+      if (callbacks_[i].message_id == kInvalidMessageId) {
         callbacks_[i].message_id = message_id;
         callbacks_[i].decoder = decoder;
         callbacks_[i].callback = new Callback(std::move(callback));
@@ -67,7 +67,7 @@ public:
     return std::make_error_code(std::errc::no_buffer_space);
   }
 
-  template <std::derived_from<Message> M> std::error_code send(const M &m) {
+  template <typename M> std::error_code send(const M &m) {
     std::array<std::byte, sizeof(Frame) + MessageTraits<M>::SIZE> out_buffer;
     std::size_t out_buffer_size = 0;
 

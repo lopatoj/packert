@@ -20,26 +20,19 @@ namespace packert {
 
 using MessageId = std::uint16_t;
 
-class Message {
-public:
-  virtual ~Message() = default;
-  MessageId id() const { return id_; };
-  std::size_t size() const { return size_; };
+constexpr MessageId kInvalidMessageId = 0;
 
-private:
-  MessageId id_{0};
-  std::size_t size_{0};
-};
-
-template <std::derived_from<Message> M> class MessageTraits {
+template <typename M> class MessageTraits {
 public:
-  static constexpr MessageId ID = 0;
+  static constexpr MessageId ID = kInvalidMessageId;
   static constexpr std::size_t SIZE = 0;
-  static std::error_code encode(const M &message, std::span<std::byte> buffer,
-                                std::size_t &encoded_size) {
+  static std::error_code encode(const M & /* message */,
+                                std::span<std::byte> /* buffer */,
+                                std::size_t & /* encoded_size */) {
     return std::make_error_code(std::errc::not_supported);
   }
-  static std::error_code decode(std::span<const std::byte> buffer, M &message) {
+  static std::error_code decode(std::span<const std::byte> /* buffer */,
+                                M & /* message */) {
     return std::make_error_code(std::errc::not_supported);
   }
 };
