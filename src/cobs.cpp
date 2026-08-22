@@ -8,7 +8,4 @@
 
 #include "packert/cobs.hpp"
 
-#include <cstddef>
-#include <cstdint>
-
-namespace packert::serial {} // namespace packert::serial
+namespace packert::serial {}  // namespace packert::serial

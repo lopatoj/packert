@@ -9,31 +9,30 @@
 #ifndef PACKERT__PORT_HPP_
 #define PACKERT__PORT_HPP_
 
+#include <nanopb/pb.h>
 #include <array>
-#include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
-#include <memory>
-#include <nanopb/pb.h>
 #include <span>
 #include <system_error>
 
 #include "packert/message.hpp"
 #include "packert/packet.hpp"
-#include "packert/ring.hpp"
 #include "packert/transport.hpp"
 #include "packert/visibility_control.h"
 
 namespace packert {
 
-template <std::size_t N> class PACKERT_PUBLIC Port {
-public:
-  using Decoder = void (*)(const std::span<std::byte> &buffer, void *callback);
+template <std::size_t N>
+class PACKERT_PUBLIC Port {
+ public:
+  using Decoder = std::error_code (*)(std::span<const std::byte> buffer,
+                                      void *callback);
 
   Port(Transport &transport) : transport_(transport) {}
 
   template <typename M, typename Callback>
+    requires HasTraits<M> && std::is_invocable_v<Callback, const Packet<M> &>
   std::error_code bind(Callback callback) {
     MessageId message_id = MessageTraits<M>::ID;
 
@@ -42,14 +41,17 @@ public:
       return std::make_error_code(std::errc::invalid_argument);
     }
 
-    Decoder decoder = [](const std::span<std::byte> &buffer, void *cb) {
+    Decoder decoder = [](std::span<const std::byte> buffer, void *cb) {
       Packet<M> packet;
 
-      if (packet.load(buffer) != std::error_code()) {
-        return;
+      if (auto ec = packet.load(buffer)) {
+        return ec;
       }
+
       auto *typed_cb = reinterpret_cast<Callback *>(cb);
       (*typed_cb)(packet);
+
+      return std::error_code();
     };
 
     for (std::size_t i = 0; i < N; ++i) {
@@ -67,39 +69,60 @@ public:
     return std::make_error_code(std::errc::no_buffer_space);
   }
 
-  template <typename M> std::error_code send(const M &m) {
-    std::array<std::byte, sizeof(Frame) + MessageTraits<M>::SIZE> out_buffer;
-    std::size_t out_buffer_size = 0;
-
+  template <typename M>
+    requires HasTraits<M>
+  std::error_code send(const M &m) {
     Packet<M> packet(m);
 
-    if (auto ec = packet.store(out_buffer, out_buffer_size)) {
-      return ec;
+    auto ex = packet.store(send_buffer_);
+    if (!ex) {
+      return ex.error();
     }
 
-    transport_.send({out_buffer.data(), out_buffer_size});
-
-    return std::error_code();
+    return transport_.send(ex.value());
   }
 
   std::error_code poll() {
-    std::byte buffer[1024];
-    std::size_t received_size = 0;
-
-    auto ec = transport_.receive(buffer, received_size);
-    if (ec) {
+    // Attempt to send an empty frame to flush the receive buffer.
+    if (auto ec = transport_.send({})) {
       return ec;
     }
 
-    std::span<std::byte> packet_buffer = {buffer, received_size};
+    for (auto i = 0U; i < max_receive_count_; i++) {
+      auto ex = transport_.receive();
+      if (!ex) {
+        auto error = ex.error();
 
-    const auto &entry = callbacks_[0];
-    entry.decoder(packet_buffer, entry.callback);
+        // No message available error code indicates call succeeded.
+        return error == std::errc::no_message_available ? std::error_code()
+                                                        : error;
+      }
 
-    return std::error_code();
+      auto &buffer = ex.value();
+
+      // Malformed packet, return error code.
+      if (buffer.size() < sizeof(Frame)) {
+        return std::make_error_code(std::errc::bad_message);
+      }
+
+      const Frame *frame = reinterpret_cast<const Frame *>(buffer.data());
+
+      // Check for available callback for message type.
+      MessageId message_id = frame->message_id;
+      for (const auto &entry : callbacks_) {
+        if (entry.message_id == message_id) {
+          if (auto ec = entry.decoder(buffer.span(), entry.callback)) {
+            return ec;
+          }
+          break;
+        }
+      }
+    }
+
+    return {};
   }
 
-private:
+ private:
   struct CallbackEntry {
     MessageId message_id = 0;
     Decoder decoder;
@@ -108,10 +131,13 @@ private:
 
   std::uint16_t next_send_sequence_ = 0;
   std::uint16_t last_receive_sequence_ = 0;
+  std::size_t max_receive_count_ = 10;
   Transport &transport_;
   std::array<CallbackEntry, N> callbacks_;
+
+  std::array<std::byte, 1024> send_buffer_;
 };
 
-} // namespace packert
+}  // namespace packert
 
-#endif // PACKERT__PORT__PORT_HPP_
+#endif  // PACKERT__PORT__PORT_HPP_

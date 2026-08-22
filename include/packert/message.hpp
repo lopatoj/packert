@@ -9,10 +9,9 @@
 #ifndef PACKERT__MESSAGE_HPP_
 #define PACKERT__MESSAGE_HPP_
 
-#include <concepts>
+#include <nanopb/pb.h>
 #include <cstddef>
 #include <cstdint>
-#include <nanopb/pb.h>
 #include <span>
 #include <system_error>
 
@@ -22,21 +21,25 @@ using MessageId = std::uint16_t;
 
 constexpr MessageId kInvalidMessageId = 0;
 
-template <typename M> class MessageTraits {
-public:
+template <typename M>
+class MessageTraits {
+ public:
   static constexpr MessageId ID = kInvalidMessageId;
   static constexpr std::size_t SIZE = 0;
-  static std::error_code encode(const M & /* message */,
+  static std::error_code encode(const M& /* message */,
                                 std::span<std::byte> /* buffer */,
-                                std::size_t & /* encoded_size */) {
+                                std::size_t& /* encoded_size */) {
     return std::make_error_code(std::errc::not_supported);
   }
   static std::error_code decode(std::span<const std::byte> /* buffer */,
-                                M & /* message */) {
+                                M& /* message */) {
     return std::make_error_code(std::errc::not_supported);
   }
 };
 
-} // namespace packert
+template <typename M>
+concept HasTraits = MessageTraits<M>::ID != kInvalidMessageId;
 
-#endif // PACKERT__MESSAGE_HPP_
+}  // namespace packert
+
+#endif  // PACKERT__MESSAGE_HPP_

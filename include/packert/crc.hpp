@@ -16,7 +16,7 @@
 namespace packert {
 
 class Crc32 {
-private:
+ private:
   static constexpr std::uint32_t POLYNOMIAL = 0xEDB88320;
 
   static constexpr std::array<std::uint32_t, 256> generate_table() noexcept {
@@ -35,7 +35,7 @@ private:
     return table;
   }
 
-public:
+ public:
   static uint32_t calculate(std::span<const std::byte> buffer,
                             uint32_t previous_crc = 0) noexcept {
     static constexpr auto table = generate_table();
@@ -51,6 +51,6 @@ public:
   }
 };
 
-} // namespace packert
+}  // namespace packert
 
-#endif // PACKERT__CRC_HPP_
+#endif  // PACKERT__CRC_HPP_

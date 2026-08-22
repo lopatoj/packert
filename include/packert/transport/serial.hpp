@@ -16,7 +16,7 @@
 namespace packert {
 
 class Serial : public Transport {
-public:
+ public:
   static constexpr std::size_t kBufferCapacity = 4096;
   static constexpr std::size_t kMaxPacketSize = 1024;
 
@@ -38,7 +38,7 @@ public:
   std::error_code receive(std::uint8_t *data, std::size_t capacity,
                           std::size_t &size_out) override;
 
-private:
+ private:
   int fd_ = -1;
   bool is_open_ = false;
   std::size_t pending_packets_ = 0;
@@ -47,6 +47,6 @@ private:
   RingBuffer<kBufferCapacity> receive_buffer_;
 };
 
-} // namespace packert
+}  // namespace packert
 
-#endif // PACKERT__SERIAL__SERIAL_HPP_
+#endif  // PACKERT__SERIAL__SERIAL_HPP_

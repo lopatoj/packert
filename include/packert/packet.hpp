@@ -9,19 +9,16 @@
 #ifndef PACKERT__PACKET_HPP_
 #define PACKERT__PACKET_HPP_
 
+#include <cstddef>
+#include <cstdint>
+#include <expected>
+#include <span>
+#include <system_error>
 #include "packert/crc.hpp"
 #include "packert/message.hpp"
 #include "packert/visibility_control.h"
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <span>
-#include <system_error>
 
 namespace packert {
-
-namespace {
 
 struct [[gnu::packed]] PACKERT_PUBLIC Frame {
   std::uint8_t sync = 0x00;
@@ -36,16 +33,15 @@ struct [[gnu::packed]] PACKERT_PUBLIC Frame {
 #pragma GCC diagnostic pop
 };
 
-} // namespace
-
-template <typename M> class PACKERT_PUBLIC Packet {
-public:
+template <typename M>
+class PACKERT_PUBLIC Packet {
+ public:
   Packet() {}
   Packet(M message) : message_(message) {
     MessageTraits<M>::encode(message, message_buffer_, message_size_);
 
-    timestamp_ = 0; // TODO: Set timestamp
-    sequence_ = 0;  // TODO: Set sequence
+    timestamp_ = 0;  // TODO: Set timestamp
+    sequence_ = 0;   // TODO: Set sequence
     message_id_ = MessageTraits<M>::ID;
     crc32_ = Crc32::calculate(
         std::span<const std::byte>(message_buffer_.data(), message_size_));
@@ -79,9 +75,10 @@ public:
     return MessageTraits<M>::decode(message_buffer, message_);
   }
 
-  std::error_code store(std::span<std::byte> buffer, std::size_t &size) const {
+  std::expected<std::span<const std::byte>, std::error_code> store(
+      std::span<std::byte> buffer) const {
     if (buffer.size() < sizeof(Frame) + message_size_) {
-      return std::make_error_code(std::errc::invalid_argument);
+      return std::unexpected(std::make_error_code(std::errc::invalid_argument));
     }
 
     Frame *frame = reinterpret_cast<Frame *>(buffer.data());
@@ -94,9 +91,9 @@ public:
     frame->message_size = message_size_;
 
     std::copy(message_buffer_.begin(), message_buffer_.end(), frame->message);
-    size = sizeof(Frame) + message_size_;
+    std::size_t size = sizeof(Frame) + message_size_;
 
-    return std::error_code();
+    return buffer.first(size);
   }
 
   std::uint32_t crc32() const { return crc32_; };
@@ -107,7 +104,7 @@ public:
   M &message() { return message_; }
   const M &message() const { return message_; }
 
-private:
+ private:
   std::array<std::byte, MessageTraits<M>::SIZE> message_buffer_{};
   std::uint32_t crc32_{0};
   std::uint64_t timestamp_{0};
@@ -117,6 +114,6 @@ private:
   M message_;
 };
 
-} // namespace packert
+}  // namespace packert
 
-#endif // PACKERT__PACKET_HPP_
+#endif  // PACKERT__PACKET_HPP_

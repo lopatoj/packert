@@ -5,21 +5,21 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
-#include <string>
 #include <system_error>
 
 class Int32Message {
-public:
+ public:
   Int32Message() : value_(0) {}
   Int32Message(int32_t value) : value_(value) {}
   std::int32_t value() const { return value_; }
 
-private:
+ private:
   std::int32_t value_;
 };
 
-template <> class packert::MessageTraits<Int32Message> {
-public:
+template <>
+class packert::MessageTraits<Int32Message> {
+ public:
   constexpr static packert::MessageId ID = 1;
   constexpr static std::size_t SIZE = sizeof(std::int32_t);
 
@@ -48,17 +48,18 @@ public:
 };
 
 class StringMessage {
-public:
+ public:
   StringMessage() : value_("") {}
   StringMessage(const char *value) : value_(value) {}
   const char *value() const { return value_; }
 
-private:
+ private:
   const char *value_;
 };
 
-template <> class packert::MessageTraits<StringMessage> {
-public:
+template <>
+class packert::MessageTraits<StringMessage> {
+ public:
   constexpr static packert::MessageId ID = 2;
   constexpr static std::size_t SIZE = 256;
 

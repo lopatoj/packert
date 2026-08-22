@@ -83,6 +83,6 @@ inline std::size_t decode(const std::uint8_t *src, std::size_t src_size,
   return write;
 }
 
-} // namespace packert
+}  // namespace packert
 
-#endif // PACKERT__SERIAL__COBS_HPP_
+#endif  // PACKERT__SERIAL__COBS_HPP_

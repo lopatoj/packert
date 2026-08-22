@@ -9,6 +9,6 @@
 #ifndef PACKERT__UDP__UDP_HPP_
 #define PACKERT__UDP__UDP_HPP_
 
-namespace packert {} // namespace packert
+namespace packert {}  // namespace packert
 
-#endif // PACKERT__UDP__UDP_HPP_
+#endif  // PACKERT__UDP__UDP_HPP_
