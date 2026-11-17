@@ -1,0 +1,11 @@
+<robot name="a">
+  <ros2_control name="a" type="system">
+    <hardware>
+      <plugin>packert/PackertSystem</plugin>
+    </hardware>
+    <joint name="joint1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+</robot>
