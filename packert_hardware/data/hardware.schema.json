@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hardware",
+  "title": "HardwareModel Jinja JSON Schema",
+  "properties": {
+    "command": { "$ref": "data" },
+    "state": { "$ref": "data" }
+  },
+  "required": [],
+  "$defs": {
+    "snake_case": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "single"
+                },
+                "name": { "$ref": "#/$defs/ssnake_case" },
+                "data_type": { "$ref": "#/$defs/snake_case" }
+              },
+              "required": ["type", "name", "data_type"]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "nested"
+                },
+                "name": { "$ref": "snake_case" },
+                "fields": {
+                  "type": "object",
+                  "propertyNames": {
+                    "$ref": "#/$defs/snake_case"
+                  },
+                  "additionalProperties": {
+                    "$ref": "#/$defs/snake_case"
+                  },
+                  "minProperties": 1
+                }
+              },
+              "required": ["type", "name", "fields"]
+            }
+          ]
+        },
+        "minProperties": 1
+      },
+      "minProperties": 1
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "joint": { "$ref": "component" },
+        "sensor": { "$ref": "component" },
+        "gpio": { "$ref": "component" }
+      },
+      "minProperties": 1
+    }
+  }
+}

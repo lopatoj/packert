@@ -1,0 +1,11 @@
+<robot name="john">
+  <ros2_control name="john" type="system">
+    <hardware>
+      <plugin>packert/PackertSystem</plugin>
+      <!-- When disabled, truncate doubles. For when device lacks float64. -->
+      <param name="use_double">true</param>
+      <!-- Removes prefix from protocol, allowing robots with different prefixes to share the same protocol. -->
+      <param name="strip_prefix">${prefix}</param>
+    </hardware>
+  </ros2_control>
+</robot>

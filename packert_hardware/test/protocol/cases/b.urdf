@@ -1,0 +1,16 @@
+<robot name="b">
+  <ros2_control name="b" type="system">
+    <hardware>
+      <plugin>packert/PackertSystem</plugin>
+    </hardware>
+    <!-- Test lexicographical joint ordering -->
+    <joint name="a">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="b">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
+</robot>
