@@ -10,6 +10,7 @@
   <depend>hardware_interface</depend>
   <depend>tobas_inja_vendor</depend>
   <depend>nlohmann-json3-dev</depend>
+  <depend>nlohmann_json_schema_validator_vendor</depend>
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 

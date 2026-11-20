@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="example" params="prefix">
+    <ros2_control name="example" type="system">
+      <hardware>
+        <plugin>packert_hardware/PackertSystem</plugin>
+        <!-- When disabled, truncate double to float32. For when device lacks float64. -->
+        <param name="use_double">true</param>
+        <!-- Removes prefix from protocol, allowing robots with different prefixes to share the same protocol. -->
+        <param name="strip_prefix">${prefix}</param>
+      </hardware>
+      <joint name="${prefix}joint1">
+        <command_interface name="effort" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+      <joint name="${prefix}joint2">
+        <command_interface name="effort" />
+        <state_interface name="position" />
+        <state_interface name="velocity" />
+      </joint>
+    </ros2_control>
+  </xacro:macro>
+</robot>
+<!--
+Produces the following protocol:
+typedef struct __attribute__((packed)) {
+
+} example_command_data;
+-->

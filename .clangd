@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-Ipackert_hardware/include/]
+  CompilationDatabase: build
